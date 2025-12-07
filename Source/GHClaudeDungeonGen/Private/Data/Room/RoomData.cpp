@@ -1,0 +1,4 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "GHClaudeDungeonGen/Public/Data/Room/RoomData.h"
