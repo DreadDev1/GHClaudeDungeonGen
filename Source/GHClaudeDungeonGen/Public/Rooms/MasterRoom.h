@@ -6,21 +6,42 @@
 #include "GameFramework/Actor.h"
 #include "MasterRoom.generated.h"
 
+class UDebugHelpers;
 UCLASS()
 class GHCLAUDEDUNGEONGEN_API AMasterRoom : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	AMasterRoom();
+	
+	// Grid Configuration
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	int32 GridSizeX = 5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	int32 GridSizeY = 5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	float CellSize = 100.0f;
+
+	// Grid cell states: true = occupied, false = unoccupied
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
+	TArray<bool> GridCells;
+
+	// Grid functions
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	void InitializeGrid();
+
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	FVector GetCellWorldPosition(int32 CellIndex) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	bool IsValidCellIndex(int32 CellIndex) const;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	// Debug Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	TObjectPtr<UDebugHelpers> DebugHelpers;
 
 };

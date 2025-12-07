@@ -14,7 +14,7 @@ class GHCLAUDEDUNGEONGEN_API UDebugHelpers : public UActorComponent
 public:
 	UDebugHelpers();
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 	// Toggle bools for debug visualization
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug|Grid")
 	bool bShowGridCreated = true;

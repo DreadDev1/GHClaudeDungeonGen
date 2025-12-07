@@ -3,25 +3,50 @@
 
 #include "Rooms/MasterRoom.h"
 
-// Sets default values
+#include "Debugging/DebugHelpers.h"
+
 AMasterRoom::AMasterRoom()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	DebugHelpers = CreateDefaultSubobject<UDebugHelpers>(TEXT("DebugHelpers"));
 }
 
-// Called when the game starts or when spawned
-void AMasterRoom::BeginPlay()
+void AMasterRoom::InitializeGrid()
 {
-	Super::BeginPlay();
-	
+	const int32 TotalCells = GridSizeX * GridSizeY;
+	GridCells.SetNum(TotalCells);
+
+	for (int32 i = 0; i < TotalCells; i++)
+	{
+		GridCells[i] = false; // All cells start unoccupied
+
+#if WITH_EDITORONLY_DATA
+		if (DebugHelpers)
+		{
+			DebugHelpers->DrawGridCreated(GetCellWorldPosition(i), CellSize);
+		}
+#endif
+	}
 }
 
-// Called every frame
-void AMasterRoom::Tick(float DeltaTime)
+FVector AMasterRoom::GetCellWorldPosition(int32 CellIndex) const
 {
-	Super::Tick(DeltaTime);
+	if (!IsValidCellIndex(CellIndex)) return FVector::ZeroVector;
 
+	const int32 X = CellIndex % GridSizeX;
+	const int32 Y = CellIndex / GridSizeX;
+
+	const FVector LocalOffset(
+		(X * CellSize) + (CellSize * 0.5f),
+		(Y * CellSize) + (CellSize * 0.5f),
+		0.0f
+	);
+
+	return GetActorLocation() + LocalOffset;
 }
 
+bool AMasterRoom::IsValidCellIndex(int32 CellIndex) const
+{
+	return CellIndex >= 0 && CellIndex < GridCells.Num();
+}
