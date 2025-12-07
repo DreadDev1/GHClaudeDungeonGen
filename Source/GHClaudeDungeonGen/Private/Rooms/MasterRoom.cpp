@@ -21,7 +21,7 @@ void AMasterRoom::InitializeGrid()
 	{
 		GridCells[i] = false; // All cells start unoccupied
 
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 		if (DebugHelpers)
 		{
 			DebugHelpers->DrawGridCreated(GetCellWorldPosition(i), CellSize);

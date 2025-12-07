@@ -30,7 +30,7 @@ public:
 	TArray<bool> GridCells;
 
 	// Grid functions
-	UFUNCTION(BlueprintCallable, Category = "Grid")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Grid")
 	void InitializeGrid();
 
 	UFUNCTION(BlueprintCallable, Category = "Grid")

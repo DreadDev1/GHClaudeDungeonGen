@@ -14,7 +14,6 @@ class GHCLAUDEDUNGEONGEN_API UDebugHelpers : public UActorComponent
 public:
 	UDebugHelpers();
 
-#if WITH_EDITORONLY_DATA
 	// Toggle bools for debug visualization
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug|Grid")
 	bool bShowGridCreated = true;
@@ -24,6 +23,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug|Grid")
 	bool bShowOccupiedCells = true;
+#if WITH_EDITOR
 
 	// Draw grid outline when grid is created (Green)
 	UFUNCTION(BlueprintCallable, Category = "Debug|Grid")
