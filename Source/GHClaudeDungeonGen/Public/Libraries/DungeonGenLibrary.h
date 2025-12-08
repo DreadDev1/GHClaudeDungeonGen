@@ -13,4 +13,5 @@ UCLASS()
 class GHCLAUDEDUNGEONGEN_API UDungeonGenLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
 };
