@@ -6,8 +6,8 @@
 
 UDebugHelpers::UDebugHelpers()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = false;
+	// Disable ticking - debug visualization is triggered manually
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// Initialize debug visualization properties
 	bEnableDebugDraw = false;
@@ -249,7 +249,6 @@ void UDebugHelpers::DrawDebugForcedPlacements(const TMap<FIntPoint, FMeshPlaceme
 void UDebugHelpers::ToggleDebugDraw()
 {
 	bEnableDebugDraw = !bEnableDebugDraw;
-	SetComponentTickEnabled(bEnableDebugDraw);
 }
 
 void UDebugHelpers::UpdateDebugVisualization(const TMap<FIntPoint, FGridCell>& Grid, float CellSize)

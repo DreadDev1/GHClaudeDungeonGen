@@ -254,24 +254,107 @@ void AMasterRoom::GenerateWalls()
 		return;
 	}
 
-	// For Phase 2, we'll place basic wall segments on cell edges
-	// More sophisticated corner detection will come in later iterations
+	// First, detect which cells need walls (cells at the edge of the room)
 	for (auto& CellPair : RuntimeGrid)
 	{
 		FGridCell& Cell = CellPair.Value;
 		
-		// Process each wall direction
-		if (Cell.bHasNorthWall && !Cell.bHasNorthDoorway)
+		// Only consider occupied cells
+		if (Cell.CellState != ECellState::Occupied)
 		{
-			// Place north wall (for now, just use first wall segment)
-			if (WallDataAsset->WallSegments.Num() > 0)
-			{
-				const FMeshPlacementData& WallData = WallDataAsset->WallSegments[0];
-				// Wall placement logic will be refined in future iterations
-			}
+			continue;
 		}
+
+		// Check each direction to see if we need a wall
+		FIntPoint NorthNeighbor(Cell.GridCoordinates.X, Cell.GridCoordinates.Y + 1);
+		FIntPoint EastNeighbor(Cell.GridCoordinates.X + 1, Cell.GridCoordinates.Y);
+		FIntPoint SouthNeighbor(Cell.GridCoordinates.X, Cell.GridCoordinates.Y - 1);
+		FIntPoint WestNeighbor(Cell.GridCoordinates.X - 1, Cell.GridCoordinates.Y);
+
+		// If neighbor doesn't exist or is unoccupied, we need a wall
+		Cell.bHasNorthWall = !RuntimeGrid.Contains(NorthNeighbor) || RuntimeGrid[NorthNeighbor].CellState == ECellState::Unoccupied;
+		Cell.bHasEastWall = !RuntimeGrid.Contains(EastNeighbor) || RuntimeGrid[EastNeighbor].CellState == ECellState::Unoccupied;
+		Cell.bHasSouthWall = !RuntimeGrid.Contains(SouthNeighbor) || RuntimeGrid[SouthNeighbor].CellState == ECellState::Unoccupied;
+		Cell.bHasWestWall = !RuntimeGrid.Contains(WestNeighbor) || RuntimeGrid[WestNeighbor].CellState == ECellState::Unoccupied;
+	}
+
+	// Now place wall meshes
+	if (WallDataAsset->WallSegments.Num() == 0)
+	{
+		return;
+	}
+
+	float CellSize = GetCellSize();
+	const FMeshPlacementData& DefaultWallSegment = WallDataAsset->WallSegments[0];
+
+	for (auto& CellPair : RuntimeGrid)
+	{
+		FGridCell& Cell = CellPair.Value;
 		
-		// Similar logic for East, South, West walls...
+		// Skip unoccupied cells
+		if (Cell.CellState != ECellState::Occupied)
+		{
+			continue;
+		}
+
+		// Place walls on each edge that needs one
+		auto PlaceWall = [&](EWallDirection Direction, bool bHasWall, bool bHasDoorway, float RotationYaw) {
+			if (!bHasWall || bHasDoorway)
+			{
+				return;
+			}
+
+			if (!DefaultWallSegment.Mesh.IsValid())
+			{
+				return;
+			}
+
+			UStaticMesh* Mesh = DefaultWallSegment.Mesh.LoadSynchronous();
+			if (!Mesh)
+			{
+				return;
+			}
+
+			FString ComponentName = FString::Printf(TEXT("Wall_%d_%d_%d"), Cell.GridCoordinates.X, Cell.GridCoordinates.Y, (int32)Direction);
+			UStaticMeshComponent* WallComponent = NewObject<UStaticMeshComponent>(this, FName(*ComponentName));
+			if (!WallComponent)
+			{
+				return;
+			}
+
+			WallComponent->SetStaticMesh(Mesh);
+			WallComponent->SetupAttachment(WallContainer);
+			WallComponent->RegisterComponent();
+
+			// Calculate wall position based on direction
+			FVector BasePosition = GetWorldPositionForCell(Cell.GridCoordinates);
+			FVector WallOffset = FVector::ZeroVector;
+
+			switch (Direction)
+			{
+			case EWallDirection::North:
+				WallOffset = FVector(CellSize * 0.5f, CellSize, 0.0f);
+				break;
+			case EWallDirection::East:
+				WallOffset = FVector(CellSize, CellSize * 0.5f, 0.0f);
+				break;
+			case EWallDirection::South:
+				WallOffset = FVector(CellSize * 0.5f, 0.0f, 0.0f);
+				break;
+			case EWallDirection::West:
+				WallOffset = FVector(0.0f, CellSize * 0.5f, 0.0f);
+				break;
+			}
+
+			WallComponent->SetWorldLocation(BasePosition + WallOffset);
+			WallComponent->SetWorldRotation(FRotator(0.0f, RotationYaw, 0.0f));
+		};
+
+		// Place walls for each direction
+		PlaceWall(EWallDirection::North, Cell.bHasNorthWall, Cell.bHasNorthDoorway, 0.0f);
+		PlaceWall(EWallDirection::East, Cell.bHasEastWall, Cell.bHasEastDoorway, 90.0f);
+		PlaceWall(EWallDirection::South, Cell.bHasSouthWall, Cell.bHasSouthDoorway, 180.0f);
+		PlaceWall(EWallDirection::West, Cell.bHasWestWall, Cell.bHasWestDoorway, 270.0f);
 	}
 }
 
@@ -291,21 +374,90 @@ void AMasterRoom::GenerateCeiling()
 
 	float CeilingHeight = CeilingDataAsset->CeilingHeightOffset;
 
-	// Similar multi-cell placement logic as floor
+	// Track which cells have been covered by ceiling tiles (important for multi-cell tiles)
+	TSet<FIntPoint> ProcessedCells;
+
+	// Sort ceiling tiles by footprint size (largest first)
+	TArray<FMeshPlacementData> SortedTiles = CeilingDataAsset->CeilingTiles;
+	SortedTiles.Sort([](const FMeshPlacementData& A, const FMeshPlacementData& B) {
+		int32 AreaA = A.CellsX * A.CellsY;
+		int32 AreaB = B.CellsX * B.CellsY;
+		return AreaA > AreaB;
+	});
+
+	// Place ceiling tiles on all occupied floor cells
 	for (auto& CellPair : RuntimeGrid)
 	{
 		FGridCell& Cell = CellPair.Value;
 		
+		// Only place ceiling on cells with floor tiles
 		if (Cell.CellState != ECellState::Occupied)
 		{
 			continue;
 		}
 
-		// Select and place ceiling tile with height offset
-		if (CeilingDataAsset->CeilingTiles.Num() > 0)
+		// Skip if already processed by a multi-cell tile
+		if (ProcessedCells.Contains(Cell.GridCoordinates))
 		{
-			const FMeshPlacementData& TileData = CeilingDataAsset->CeilingTiles[0];
-			// Ceiling placement with height offset
+			continue;
+		}
+
+		// Try to place largest tile that fits
+		bool bPlaced = false;
+		for (const FMeshPlacementData& TileData : SortedTiles)
+		{
+			// Check if this tile would fit
+			bool bCanPlace = true;
+			for (int32 Y = 0; Y < TileData.CellsY && bCanPlace; ++Y)
+			{
+				for (int32 X = 0; X < TileData.CellsX && bCanPlace; ++X)
+				{
+					FIntPoint CheckCoord(Cell.GridCoordinates.X + X, Cell.GridCoordinates.Y + Y);
+					const FGridCell* CheckCell = RuntimeGrid.Find(CheckCoord);
+					if (!CheckCell || CheckCell->CellState != ECellState::Occupied || ProcessedCells.Contains(CheckCoord))
+					{
+						bCanPlace = false;
+					}
+				}
+			}
+
+			if (bCanPlace)
+			{
+				// Place the ceiling tile at height offset
+				if (TileData.Mesh.IsValid())
+				{
+					UStaticMesh* Mesh = TileData.Mesh.LoadSynchronous();
+					if (Mesh)
+					{
+						FString ComponentName = FString::Printf(TEXT("CeilingMesh_%d_%d"), Cell.GridCoordinates.X, Cell.GridCoordinates.Y);
+						UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this, FName(*ComponentName));
+						if (MeshComponent)
+						{
+							MeshComponent->SetStaticMesh(Mesh);
+							MeshComponent->SetupAttachment(CeilingContainer);
+							MeshComponent->RegisterComponent();
+
+							// Calculate position with pivot offset and ceiling height
+							FVector BasePosition = GetWorldPositionForCell(Cell.GridCoordinates, CeilingHeight);
+							FVector PivotOffset = CalculatePivotOffset(TileData);
+							MeshComponent->SetWorldLocation(BasePosition + PivotOffset);
+
+							// Mark cells as processed
+							for (int32 Y = 0; Y < TileData.CellsY; ++Y)
+							{
+								for (int32 X = 0; X < TileData.CellsX; ++X)
+								{
+									FIntPoint ProcessedCoord(Cell.GridCoordinates.X + X, Cell.GridCoordinates.Y + Y);
+									ProcessedCells.Add(ProcessedCoord);
+								}
+							}
+
+							bPlaced = true;
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 }
