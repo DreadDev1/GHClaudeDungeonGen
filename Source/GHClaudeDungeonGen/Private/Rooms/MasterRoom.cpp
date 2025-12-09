@@ -47,9 +47,9 @@ void AMasterRoom::GenerateRoom()
 	CleanupRoom();
 
 	// Validate RoomData
-	if (!RoomData.IsValid() || RoomData.IsNull())
+	if (RoomData.IsNull())
 	{
-		UE_LOG(LogTemp, Error, TEXT("AMasterRoom::GenerateRoom - RoomData is null or invalid!"));
+		UE_LOG(LogTemp, Error, TEXT("AMasterRoom::GenerateRoom - RoomData is null!"));
 		return;
 	}
 
@@ -647,7 +647,8 @@ bool AMasterRoom::TryPlaceMultiCellMesh(const FIntPoint& BottomLeftCell, const F
 			if (FGridCell* Cell = RuntimeGrid.Find(CellCoord))
 			{
 				Cell->CellState = ECellState::Occupied;
-				Cell->OccupyingActor = MeshComponent;
+				// Store the owning actor (this AMasterRoom) since OccupyingActor is TWeakObjectPtr<AActor>
+				Cell->OccupyingActor = this;
 			}
 		}
 	}
