@@ -6,7 +6,7 @@
 
 UDebugHelpers::UDebugHelpers()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// Initialize default values
 	bDrawGrid = true;
@@ -25,14 +25,6 @@ UDebugHelpers::UDebugHelpers()
 	// Set default drawing parameters
 	LineThickness = 2.0f;
 	DebugDrawHeight = 5.0f;
-}
-
-void UDebugHelpers::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// Tick is enabled but we don't need continuous updates
-	// Debug drawing is done on-demand through the Draw methods
 }
 
 UWorld* UDebugHelpers::GetDebugWorld() const

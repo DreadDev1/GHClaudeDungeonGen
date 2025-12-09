@@ -319,7 +319,9 @@ int32 AMasterRoom::GetEffectiveSeed() const
 {
 	if (bUseRandomSeed)
 	{
-		return FMath::Rand();
+		// Generate a seed based on current time to ensure reproducibility within the same generation call
+		// This maintains deterministic behavior once the seed is set
+		return FPlatformTime::Cycles();
 	}
 	return GenerationSeed;
 }

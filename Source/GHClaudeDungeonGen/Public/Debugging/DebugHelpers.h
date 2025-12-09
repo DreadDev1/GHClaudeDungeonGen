@@ -99,10 +99,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Debug Helpers")
 	void ClearDebugDrawings();
 
-protected:
-	/** Called every frame (if tick is enabled) */
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 private:
 	/** Get the world for drawing debug shapes */
 	UWorld* GetDebugWorld() const;
