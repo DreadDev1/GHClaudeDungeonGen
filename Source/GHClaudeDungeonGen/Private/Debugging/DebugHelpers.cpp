@@ -35,11 +35,6 @@ void UDebugHelpers::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UDebugHelpers::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 void UDebugHelpers::DrawDebugGrid(const TMap<FIntPoint, FGridCell>& Grid, float CellSize)
 {
 	if (!bEnableDebugDraw || !bDrawGrid)

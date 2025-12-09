@@ -272,16 +272,15 @@ void AMasterRoom::GenerateWalls()
 		FIntPoint WestNeighbor(Cell.GridCoordinates.X - 1, Cell.GridCoordinates.Y);
 
 		// If neighbor doesn't exist or is unoccupied, we need a wall
-		Cell.bHasNorthWall = !RuntimeGrid.Contains(NorthNeighbor) || RuntimeGrid[NorthNeighbor].CellState == ECellState::Unoccupied;
-		Cell.bHasEastWall = !RuntimeGrid.Contains(EastNeighbor) || RuntimeGrid[EastNeighbor].CellState == ECellState::Unoccupied;
-		Cell.bHasSouthWall = !RuntimeGrid.Contains(SouthNeighbor) || RuntimeGrid[SouthNeighbor].CellState == ECellState::Unoccupied;
-		Cell.bHasWestWall = !RuntimeGrid.Contains(WestNeighbor) || RuntimeGrid[WestNeighbor].CellState == ECellState::Unoccupied;
-	}
+		const FGridCell* NorthCell = RuntimeGrid.Find(NorthNeighbor);
+		const FGridCell* EastCell = RuntimeGrid.Find(EastNeighbor);
+		const FGridCell* SouthCell = RuntimeGrid.Find(SouthNeighbor);
+		const FGridCell* WestCell = RuntimeGrid.Find(WestNeighbor);
 
-	// Now place wall meshes
-	if (WallDataAsset->WallSegments.Num() == 0)
-	{
-		return;
+		Cell.bHasNorthWall = !NorthCell || NorthCell->CellState == ECellState::Unoccupied;
+		Cell.bHasEastWall = !EastCell || EastCell->CellState == ECellState::Unoccupied;
+		Cell.bHasSouthWall = !SouthCell || SouthCell->CellState == ECellState::Unoccupied;
+		Cell.bHasWestWall = !WestCell || WestCell->CellState == ECellState::Unoccupied;
 	}
 
 	float CellSize = GetCellSize();
