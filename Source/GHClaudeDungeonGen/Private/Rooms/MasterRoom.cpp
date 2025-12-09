@@ -100,6 +100,12 @@ void AMasterRoom::GenerateRoom()
 	GenerateWalls();
 	GenerateCeiling();
 
+	// Update debug visualization if enabled
+	if (DebugHelpers && DebugHelpers->bEnableDebugDraw)
+	{
+		DebugHelpers->UpdateDebugVisualization(RuntimeGrid, GetCellSize());
+	}
+
 	bIsGenerated = true;
 	UE_LOG(LogTemp, Log, TEXT("AMasterRoom::GenerateRoom - Room generation completed successfully"));
 }
@@ -613,9 +619,127 @@ void AMasterRoom::InitializeGrid(const FRoomShapeDefinition& ShapeDefinition)
 		}
 		break;
 
-	// L, T, U shapes would be implemented similarly
+	case ERoomShape::LShape:
+		{
+			// L-Shape: Main rectangle + one extension
+			// Main section
+			for (int32 Y = 0; Y < ShapeDefinition.RectHeight; ++Y)
+			{
+				for (int32 X = 0; X < ShapeDefinition.RectWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+			// Extension (simplified - extends from bottom-right)
+			// In a full implementation, this would use FShapeTemplate
+			// For now, extend by half the width to the right
+			int32 ExtensionWidth = FMath::Max(1, ShapeDefinition.RectWidth / 2);
+			int32 ExtensionHeight = FMath::Max(1, ShapeDefinition.RectHeight / 2);
+			for (int32 Y = 0; Y < ExtensionHeight; ++Y)
+			{
+				for (int32 X = ShapeDefinition.RectWidth; X < ShapeDefinition.RectWidth + ExtensionWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+		}
+		break;
+
+	case ERoomShape::TShape:
+		{
+			// T-Shape: Main rectangle + extensions on two opposite sides
+			// Main section
+			for (int32 Y = 0; Y < ShapeDefinition.RectHeight; ++Y)
+			{
+				for (int32 X = 0; X < ShapeDefinition.RectWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+			// Top extension
+			int32 ExtensionWidth = FMath::Max(1, ShapeDefinition.RectWidth / 3);
+			int32 ExtensionHeight = FMath::Max(1, ShapeDefinition.RectHeight / 3);
+			int32 ExtensionStartX = (ShapeDefinition.RectWidth - ExtensionWidth) / 2;
+			for (int32 Y = ShapeDefinition.RectHeight; Y < ShapeDefinition.RectHeight + ExtensionHeight; ++Y)
+			{
+				for (int32 X = ExtensionStartX; X < ExtensionStartX + ExtensionWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+		}
+		break;
+
+	case ERoomShape::UShape:
+		{
+			// U-Shape: Main rectangle + extensions on three sides
+			// Main section (bottom bar of U)
+			for (int32 Y = 0; Y < ShapeDefinition.RectHeight / 3; ++Y)
+			{
+				for (int32 X = 0; X < ShapeDefinition.RectWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+			// Left vertical extension
+			int32 ExtensionHeight = ShapeDefinition.RectHeight * 2 / 3;
+			int32 ExtensionWidth = ShapeDefinition.RectWidth / 3;
+			for (int32 Y = ShapeDefinition.RectHeight / 3; Y < ShapeDefinition.RectHeight; ++Y)
+			{
+				for (int32 X = 0; X < ExtensionWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+			// Right vertical extension
+			for (int32 Y = ShapeDefinition.RectHeight / 3; Y < ShapeDefinition.RectHeight; ++Y)
+			{
+				for (int32 X = ShapeDefinition.RectWidth - ExtensionWidth; X < ShapeDefinition.RectWidth; ++X)
+				{
+					FIntPoint GridCoord(X, Y);
+					FGridCell NewCell;
+					NewCell.GridCoordinates = GridCoord;
+					NewCell.CellState = ECellState::Unoccupied;
+					NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
+					RuntimeGrid.Add(GridCoord, NewCell);
+				}
+			}
+		}
+		break;
+
 	default:
-		// For now, default to rectangle
+		// Default to rectangle for any unknown shape type
+		UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::InitializeGrid - Unknown shape type, defaulting to rectangle"));
 		for (int32 Y = 0; Y < ShapeDefinition.RectHeight; ++Y)
 		{
 			for (int32 X = 0; X < ShapeDefinition.RectWidth; ++X)
@@ -625,7 +749,6 @@ void AMasterRoom::InitializeGrid(const FRoomShapeDefinition& ShapeDefinition)
 				NewCell.GridCoordinates = GridCoord;
 				NewCell.CellState = ECellState::Unoccupied;
 				NewCell.WorldPosition = GetWorldPositionForCell(GridCoord);
-				
 				RuntimeGrid.Add(GridCoord, NewCell);
 			}
 		}
@@ -646,4 +769,17 @@ float AMasterRoom::GetCellSize() const
 	
 	// Default cell size
 	return 100.0f;
+}
+
+void AMasterRoom::RefreshDebugVisualization()
+{
+	if (DebugHelpers && bIsGenerated)
+	{
+		DebugHelpers->UpdateDebugVisualization(RuntimeGrid, GetCellSize());
+		
+		// Also draw forced placements
+		DebugHelpers->DrawDebugForcedPlacements(ForcedFloorPlacements, GetCellSize());
+		DebugHelpers->DrawDebugForcedPlacements(ForcedWallPlacements, GetCellSize());
+		DebugHelpers->DrawDebugForcedPlacements(ForcedCeilingPlacements, GetCellSize());
+	}
 }

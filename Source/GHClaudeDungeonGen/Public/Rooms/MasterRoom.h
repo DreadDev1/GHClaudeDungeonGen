@@ -130,6 +130,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room Generation")
 	void CleanupRoom();
 
+	/** Refreshes debug visualization (useful when changing debug settings) */
+	UFUNCTION(BlueprintCallable, Category = "Room Generation|Debug")
+	void RefreshDebugVisualization();
+
+	/** Returns true if the room has been successfully generated */
+	UFUNCTION(BlueprintPure, Category = "Room Generation")
+	bool IsRoomGenerated() const { return bIsGenerated; }
+
+	/** Returns the current generation seed being used */
+	UFUNCTION(BlueprintPure, Category = "Room Generation")
+	int32 GetCurrentSeed() const { return GenerationSeed; }
+
+	/** Returns the number of cells in the runtime grid */
+	UFUNCTION(BlueprintPure, Category = "Room Generation")
+	int32 GetGridCellCount() const { return RuntimeGrid.Num(); }
+
 protected:
 	/** Generates floor tiles with forced placement support */
 	void GenerateFloor();
