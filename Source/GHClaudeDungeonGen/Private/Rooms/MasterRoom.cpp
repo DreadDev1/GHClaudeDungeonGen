@@ -10,6 +10,10 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/World.h"
+
+// Constants
+static constexpr float SELECTION_WEIGHT_SCALE = 100.0f; // SelectionWeight is 0-100, normalized to 0-1
 
 AMasterRoom::AMasterRoom()
 {
@@ -414,7 +418,7 @@ void AMasterRoom::GenerateFloorTiles()
 				if (CanPlaceMeshAt(Cell.GridCoordinates, TileData.CellsX, TileData.CellsY))
 				{
 					// Use weighted random selection based on SelectionWeight
-					if (RandomStream.FRand() <= (TileData.SelectionWeight / 100.0f))
+					if (RandomStream.FRand() <= (TileData.SelectionWeight / SELECTION_WEIGHT_SCALE))
 					{
 						// Place the tile
 						MarkCellsOccupied(Cell.GridCoordinates, TileData.CellsX, TileData.CellsY);
