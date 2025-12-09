@@ -27,10 +27,7 @@ void UDebugHelpers::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// Only draw if any debug flag is enabled and we have cached data
-	const bool bAnyDebugEnabled = bShowGrid || bShowCellCoordinates || bShowCellStates || 
-	                               bShowWalls || bShowDoorways || bShowSnapPoints;
-	
-	if (bAnyDebugEnabled && CachedGridCells.Num() > 0)
+	if (IsAnyDebugEnabled() && CachedGridCells.Num() > 0)
 	{
 		DrawRoomDebug(CachedGridCells, CachedSnapPoints, CachedCellSize);
 	}
@@ -262,10 +259,8 @@ void UDebugHelpers::DrawRoomDebug(const TArray<FGridCell>& GridCells, const TArr
 	CachedSnapPoints = SnapPoints;
 	CachedCellSize = CellSize;
 
-	// Enable tick if any debug flag is enabled
-	const bool bAnyDebugEnabled = bShowGrid || bShowCellCoordinates || bShowCellStates || 
-	                               bShowWalls || bShowDoorways || bShowSnapPoints;
-	SetComponentTickEnabled(bAnyDebugEnabled);
+	// Enable tick only if debug is needed
+	SetComponentTickEnabled(IsAnyDebugEnabled() && CachedGridCells.Num() > 0);
 
 	// Draw all debug visuals
 	DrawGrid(GridCells, CellSize);
@@ -304,4 +299,10 @@ FColor UDebugHelpers::GetCellStateColor(ECellState State) const
 		default:
 			return FColor::White;
 	}
+}
+
+bool UDebugHelpers::IsAnyDebugEnabled() const
+{
+	return bShowGrid || bShowCellCoordinates || bShowCellStates || 
+	       bShowWalls || bShowDoorways || bShowSnapPoints;
 }

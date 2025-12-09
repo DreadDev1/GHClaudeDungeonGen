@@ -382,16 +382,43 @@ void AMasterRoom::GenerateGrid(const FRoomShapeDefinition& Shape)
 			}
 			break;
 		}
-		default:
+		case ERoomShape::LShape:
+		case ERoomShape::TShape:
+		case ERoomShape::UShape:
+		{
 			// L, T, U shapes - for now, treat as rectangles (can be enhanced later)
-			UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::GenerateGrid - L/T/U shapes not yet fully implemented, using rectangle"));
-			// Create a simple rectangular shape using the base dimensions
-			FRoomShapeDefinition RectShape;
-			RectShape.ShapeType = ERoomShape::Rectangle;
-			RectShape.RectWidth = FMath::Max(Shape.RectWidth, 5);
-			RectShape.RectHeight = FMath::Max(Shape.RectHeight, 5);
-			GenerateGrid(RectShape);
+			UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::GenerateGrid - L/T/U shapes not yet fully implemented, generating simple rectangle"));
+			
+			// Generate rectangular grid directly without recursion
+			const int32 Width = FMath::Max(Shape.RectWidth, 5);
+			const int32 Height = FMath::Max(Shape.RectHeight, 5);
+			
+			for (int32 Y = 0; Y < Height; ++Y)
+			{
+				for (int32 X = 0; X < Width; ++X)
+				{
+					FGridCell Cell;
+					Cell.GridCoordinates = FIntPoint(X, Y);
+					Cell.CellState = ECellState::Occupied;
+					
+					// Calculate world position (centered on origin)
+					Cell.WorldPosition = FVector(
+						X * CellSize - (Width * CellSize) / 2.0f + CellSize / 2.0f,
+						Y * CellSize - (Height * CellSize) / 2.0f + CellSize / 2.0f,
+						0.0f
+					);
+
+					// Set perimeter walls
+					Cell.bHasNorthWall = (Y == Height - 1);
+					Cell.bHasSouthWall = (Y == 0);
+					Cell.bHasEastWall = (X == Width - 1);
+					Cell.bHasWestWall = (X == 0);
+
+					Grid.Add(Cell);
+				}
+			}
 			break;
+		}
 	}
 }
 

@@ -103,4 +103,7 @@ private:
 	
 	/** Cached cell size */
 	float CachedCellSize;
+
+	/** Helper method to check if any debug flags are enabled */
+	bool IsAnyDebugEnabled() const;
 };
