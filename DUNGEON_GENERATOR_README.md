@@ -733,47 +733,86 @@ DungeonManager->GenerateFromSeedData(SeedData);
 
 ## Future Phases Roadmap
 
-### Phase 2: Generation Logic (Next)
-**Scope**: Implement the actual dungeon generation algorithms
+### Phase 2: MasterRoom Editor and Runtime Functionality ✅ COMPLETED
+**Scope**: Implement room generation and editor visualization
 
-**Components**:
-1. **Grid Manager**:
-   - Allocate 2D grid
-   - Track cell states
-   - Handle grid-to-world coordinate conversion
+**Components Implemented**:
+1. **AMasterRoom Actor**:
+   - Complete room generation system with grid initialization
+   - EditAnywhere properties for designer configuration
+   - CallInEditor functions for in-editor workflow
+   - Forced placement system with conflict detection
+   - Weighted multi-cell random placement algorithm
+   - Proper pivot point calculations for mesh placement
+   - Scene component hierarchy (Floor, Wall, Ceiling, Doorway containers)
 
-2. **Room Placement Algorithm**:
-   - Select RoomData from pool
-   - Choose shape from AllowedShapes
-   - Find valid grid location (no overlap)
-   - Reserve cells (set to Occupied)
+2. **Grid Management**:
+   - Dynamic grid allocation based on room shape
+   - Cell state tracking (Unoccupied, Occupied, Reserved, Excluded)
+   - Support for Rectangle and Custom shapes
+   - Grid-to-world coordinate conversion
+   - Multi-cell footprint validation
 
-3. **Doorway Placement**:
-   - Analyze room boundaries
-   - Select doorway locations (based on Min/MaxDoorways)
-   - Set doorway flags on FGridCell edges
+3. **Forced Placement System**:
+   - Designer-configurable forced mesh placements
+   - Bottom-left cell coordinate mapping
+   - Overlap detection with warning logging
+   - Rejection of conflicting placements (no auto-resolve)
+   - Support for floor, wall, ceiling, and doorway forced placements
 
-4. **Hallway Generation**:
-   - Connect rooms via pathfinding
-   - Reserve hallway cells
-   - Place hallway tiles
+4. **Generation Algorithm**:
+   - Two-pass floor tile generation:
+     - Pass 1: Weighted multi-cell placement (largest to smallest)
+     - Pass 2: Single-cell fill for remaining spaces
+   - Deterministic random generation via FRandomStream
+   - Respects forced placement cell reservations
 
-5. **Mesh Spawning**:
-   - Load meshes from Data Assets (async)
-   - Spawn static mesh actors at cell positions
-   - Apply materials
-   - Handle rotations
+5. **Debug Visualization (UDebugHelpers)**:
+   - DrawGrid() - Green grid lines showing cell boundaries
+   - DrawOccupiedCells() - Red highlighting of occupied cells
+   - DrawUnoccupiedCells() - Blue highlighting of available cells
+   - DrawForcedPlacements() - Yellow markers for forced mesh placements
+   - Configurable visualization settings (toggles, line thickness, z-offset)
 
-6. **Wall/Corner Detection**:
-   - Analyze cell wall flags
-   - Detect inner/outer corners
-   - Select appropriate meshes from WallData
+6. **CallInEditor Functions**:
+   - GenerateRoom() - Generate room from current configuration
+   - ClearRoom() - Remove all spawned meshes and reset state
+   - RegenerateRoom() - Clear and regenerate in one action
+   - UpdateDebugVisualization() - Refresh debug drawings
 
 **Deliverables**:
-- `ADungeonManager` actor with generation logic
-- Grid management system
-- Room placement algorithms
-- Mesh spawning system
+- ✅ `AMasterRoom` actor with full generation logic
+- ✅ Grid management system
+- ✅ Forced placement algorithms with conflict detection
+- ✅ Weighted multi-cell mesh spawning system
+- ✅ Editor debug visualization tools
+- ✅ CallInEditor workflow for designers
+
+**Key Design Decisions**:
+- FIntPoint keys in forced placement maps = bottom-left cell coordinate
+- Overlapping forced placements are rejected and logged
+- Random generation avoids cells occupied by forced placements
+- GridConfig.CellSize drives all placement offset calculations
+- Multi-cell placement uses weighted selection from largest to smallest
+- Single-cell tiles fill remaining unoccupied spaces
+
+**Usage Example**:
+```cpp
+// In Unreal Editor:
+1. Place AMasterRoom actor in level
+2. Assign RoomData asset in Details panel
+3. (Optional) Configure forced placements in Details panel
+4. Click "Generate Room" button to create the room
+5. View debug visualization to inspect grid and cell states
+6. Click "Clear Room" to remove generation
+7. Adjust settings and click "Regenerate Room" to iterate
+```
+
+**Future Enhancements**:
+- Wall/Corner detection and placement (placeholder implemented)
+- Full L/T/U shape support (currently uses rectangles)
+- Doorway snap point population
+- Performance optimizations (coordinate mapping, bounds caching)
 
 ---
 
@@ -988,6 +1027,18 @@ A: Verify DefaultMaterial is set in Data Asset. Check material slot names match 
 **Q: Custom room shape not generating correctly**
 A: Verify CustomCellLayout array length = CustomLayoutWidth × CustomLayoutHeight. Check array is 1D (indexed as [Y * Width + X]).
 
+**Q: Forced placement rejected with overlap warning (Phase 2)**
+A: Check that forced placement coordinates don't conflict with other forced placements or existing occupied cells. The bottom-left coordinate (key) plus footprint size must fit within unoccupied cells. Forced placements are rejected if they overlap - there is no auto-resolve.
+
+**Q: Debug visualization not appearing in editor (Phase 2)**
+A: Ensure DebugHelper component's bShowDebugVisualization is enabled and specific visualization flags (bDrawGrid, bDrawOccupiedCells, etc.) are toggled on. Click "Update Debug Visualization" button after generating the room.
+
+**Q: Floor tiles not filling all cells (Phase 2)**
+A: Check that FloorData has both multi-cell and single-cell (1x1) tiles defined. The generator places large tiles first, then fills gaps with 1x1 tiles. If only large tiles exist, small gaps will remain unfilled.
+
+**Q: GenerateRoom button does nothing (Phase 2)**
+A: Verify RoomData asset is assigned in the Details panel. Check Output Log for error messages. Ensure RoomData has valid FloorData, GridConfig, and AllowedShapes configured.
+
 ---
 
 ## Credits & Contribution
@@ -1005,7 +1056,12 @@ A: Verify CustomCellLayout array length = CustomLayoutWidth × CustomLayoutHeigh
 ## Revision History
 
 - **Version 1.0** (Phase 1): Initial type system and data asset architecture
-- **Version 2.0** (Phase 2): [Future] Generation logic implementation
+- **Version 2.0** (Phase 2): ✅ MasterRoom editor and runtime functionality
+  - AMasterRoom actor with grid initialization and generation
+  - Forced placement system with conflict detection
+  - Weighted multi-cell random placement algorithm
+  - Debug visualization tools (grid, occupied/unoccupied cells, forced placements)
+  - CallInEditor workflow for designers
 - **Version 3.0** (Phase 3): [Future] Interactivity & polish
 - **Version 4.0** (Phase 4): [Future] Advanced features
 - **Version 5.0** (Phase 5): [Future] Editor tools
