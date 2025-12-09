@@ -30,7 +30,7 @@ public:
 	// ========== Room Data Configuration ==========
 	
 	/** Reference to the room data asset that defines this room */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Configuration", meta = (AllowedClasses = "/Script/GHClaudeDungeonGen.RoomData"))
 	TSoftObjectPtr<URoomData> RoomData;
 
 	/** Seed for this room's generation (used if bUseRandomSeed is false) */

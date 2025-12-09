@@ -198,7 +198,8 @@ void UDebugHelpers::DrawCellCoordinate(const FGridCell& Cell, const FVector& Off
 	const FVector TextLocation = Cell.WorldPosition + Offset + FVector(0, 0, DebugDrawHeight + 10.0f);
 	const FString CoordText = FString::Printf(TEXT("(%d,%d)"), Cell.GridCoordinates.X, Cell.GridCoordinates.Y);
 	
-	DrawDebugString(World, TextLocation, CoordText, nullptr, FColor::Yellow, -1.0f, true, 1.0f);
+	// Use finite duration to prevent accumulation of debug text
+	DrawDebugString(World, TextLocation, CoordText, nullptr, FColor::Yellow, 0.1f, true, 1.0f);
 }
 
 void UDebugHelpers::DrawDoorwaySnapPoints(const TArray<FVector>& SnapPoints, float Radius)

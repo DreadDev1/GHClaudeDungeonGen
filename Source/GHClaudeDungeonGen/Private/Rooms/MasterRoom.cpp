@@ -183,8 +183,8 @@ void AMasterRoom::ClearRoom()
 
 void AMasterRoom::RegenerateWithNewSeed()
 {
-	// Generate a new random seed
-	GenerationSeed = FMath::Rand();
+	// Generate a new random seed based on current time
+	GenerationSeed = static_cast<int32>(FDateTime::Now().GetTicks());
 	bUseRandomSeed = false;
 	
 	// Regenerate room
@@ -319,9 +319,9 @@ int32 AMasterRoom::GetEffectiveSeed() const
 {
 	if (bUseRandomSeed)
 	{
-		// Generate a seed based on current time to ensure reproducibility within the same generation call
-		// This maintains deterministic behavior once the seed is set
-		return FPlatformTime::Cycles();
+		// Use system time for random seed generation
+		// This provides consistent cross-platform behavior
+		return static_cast<int32>(FDateTime::Now().GetTicks());
 	}
 	return GenerationSeed;
 }
