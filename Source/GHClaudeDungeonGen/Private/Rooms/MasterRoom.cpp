@@ -53,7 +53,7 @@ void AMasterRoom::BeginPlay()
 	Super::BeginPlay();
 	
 	// Auto-generate at runtime if RoomData is set
-	if (RoomData.IsNull() == false && !bIsGenerated)
+	if (!RoomData.IsNull() && !bIsGenerated)
 	{
 		GenerateRoom();
 	}
@@ -76,7 +76,7 @@ void AMasterRoom::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 			PropertyName == GET_MEMBER_NAME_CHECKED(AMasterRoom, bOverrideShape) ||
 			PropertyName == GET_MEMBER_NAME_CHECKED(AMasterRoom, ShapeOverride))
 		{
-			if (RoomData.IsNull() == false)
+			if (!RoomData.IsNull())
 			{
 				GenerateRoom();
 			}
@@ -385,8 +385,11 @@ void AMasterRoom::GenerateGrid(const FRoomShapeDefinition& Shape)
 		default:
 			// L, T, U shapes - for now, treat as rectangles (can be enhanced later)
 			UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::GenerateGrid - L/T/U shapes not yet fully implemented, using rectangle"));
-			FRoomShapeDefinition RectShape = Shape;
+			// Create a simple rectangular shape using the base dimensions
+			FRoomShapeDefinition RectShape;
 			RectShape.ShapeType = ERoomShape::Rectangle;
+			RectShape.RectWidth = FMath::Max(Shape.RectWidth, 5);
+			RectShape.RectHeight = FMath::Max(Shape.RectHeight, 5);
 			GenerateGrid(RectShape);
 			break;
 	}

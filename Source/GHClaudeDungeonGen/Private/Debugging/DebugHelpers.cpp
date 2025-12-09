@@ -8,7 +8,7 @@
 UDebugHelpers::UDebugHelpers()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false; // Start disabled, enable when debug is needed
 
 	// Initialize default debug settings
 	bShowGrid = true;
@@ -26,8 +26,11 @@ void UDebugHelpers::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// Continuously draw debug visuals if enabled
-	if (CachedGridCells.Num() > 0)
+	// Only draw if any debug flag is enabled and we have cached data
+	const bool bAnyDebugEnabled = bShowGrid || bShowCellCoordinates || bShowCellStates || 
+	                               bShowWalls || bShowDoorways || bShowSnapPoints;
+	
+	if (bAnyDebugEnabled && CachedGridCells.Num() > 0)
 	{
 		DrawRoomDebug(CachedGridCells, CachedSnapPoints, CachedCellSize);
 	}
@@ -258,6 +261,11 @@ void UDebugHelpers::DrawRoomDebug(const TArray<FGridCell>& GridCells, const TArr
 	CachedGridCells = GridCells;
 	CachedSnapPoints = SnapPoints;
 	CachedCellSize = CellSize;
+
+	// Enable tick if any debug flag is enabled
+	const bool bAnyDebugEnabled = bShowGrid || bShowCellCoordinates || bShowCellStates || 
+	                               bShowWalls || bShowDoorways || bShowSnapPoints;
+	SetComponentTickEnabled(bAnyDebugEnabled);
 
 	// Draw all debug visuals
 	DrawGrid(GridCells, CellSize);
