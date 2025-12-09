@@ -87,6 +87,9 @@ void AMasterRoom::GenerateRoom()
 
 	bIsGenerated = true;
 
+	// Update debug visualization
+	UpdateDebugVisualization();
+
 	UE_LOG(LogTemp, Log, TEXT("AMasterRoom::GenerateRoom - Room generated successfully"));
 }
 
@@ -135,6 +138,46 @@ void AMasterRoom::RegenerateRoom()
 {
 	ClearRoom();
 	GenerateRoom();
+}
+
+void AMasterRoom::UpdateDebugVisualization()
+{
+	if (!DebugHelper)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::UpdateDebugVisualization - DebugHelper is null"));
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::UpdateDebugVisualization - World is null"));
+		return;
+	}
+
+	URoomData* LoadedRoomData = RoomData.LoadSynchronous();
+	if (!LoadedRoomData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AMasterRoom::UpdateDebugVisualization - RoomData is null"));
+		return;
+	}
+
+	const float CellSize = LoadedRoomData->GridConfig.CellSize;
+	const FVector OwnerLocation = GetActorLocation();
+
+	// Draw grid lines
+	DebugHelper->DrawGrid(Grid, CellSize, OwnerLocation, World);
+
+	// Draw occupied cells
+	DebugHelper->DrawOccupiedCells(Grid, CellSize, OwnerLocation, World);
+
+	// Draw unoccupied cells
+	DebugHelper->DrawUnoccupiedCells(Grid, CellSize, OwnerLocation, World);
+
+	// Draw forced placements
+	DebugHelper->DrawForcedPlacements(ForcedFloorPlacements, CellSize, OwnerLocation, World);
+
+	UE_LOG(LogTemp, Log, TEXT("AMasterRoom::UpdateDebugVisualization - Debug visualization updated"));
 }
 
 void AMasterRoom::InitializeGrid()

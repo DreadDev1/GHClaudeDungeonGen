@@ -77,6 +77,10 @@ public:
 	UFUNCTION(CallInEditor, Category = "Room Generation")
 	void RegenerateRoom();
 
+	/** Update debug visualization (call after generation or when debug settings change) */
+	UFUNCTION(CallInEditor, Category = "Room Generation")
+	void UpdateDebugVisualization();
+
 	// ========== Runtime State ==========
 	
 	/** Grid cells representing the room layout */
